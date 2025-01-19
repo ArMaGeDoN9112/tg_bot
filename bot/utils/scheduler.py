@@ -45,7 +45,7 @@ def setup_scheduler(scheduler: AsyncIOScheduler, bot: Bot):
 
     for task in tasks:
         task_id, description, assigned_to, status, due_date_str, user_id = task
-        due_date = datetime.strptime(due_date_str, "%Y-%m-%d %H:%M:%S")
+        due_date = datetime.strptime(due_date_str, "%m-%d %H:%M")
 
         reminder_time = due_date - timedelta(hours=1)
 
@@ -64,3 +64,5 @@ def setup_scheduler(scheduler: AsyncIOScheduler, bot: Bot):
         minute=0,
         args=[bot],
     )
+
+    print(scheduler.print_jobs())

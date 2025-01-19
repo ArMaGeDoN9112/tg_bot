@@ -25,16 +25,17 @@ async def create_task(message: Message, state: FSMContext):
 async def process_description(message: Message, state: FSMContext):
     await state.update_data(description=message.text)
     await state.set_state(TaskCreation.due_date)
-    await message.answer("Введите срок выполнения задачи (в формате ГГГГ-ММ-ДД ЧЧ:ММ:СС):")
+    await message.answer("Введите срок выполнения задачи (в формате ММ-ДД ЧЧ:ММ):")
 
 @router.message(TaskCreation.due_date)
 async def process_due_date(message: Message, state: FSMContext, scheduler: AsyncIOScheduler):
     due_date = message.text
 
     try:
-        due_date_obj = datetime.strptime(due_date, "%Y-%m-%d %H:%M:%S")
+        due_date_obj = datetime.strptime(due_date, "%m-%d %H:%M")
+        due_date_obj = due_date_obj.replace(year=2025)
     except ValueError:
-        await message.answer("Неверный формат даты. Введите дату в формате ГГГГ-ММ-ДД ЧЧ:ММ:СС.")
+        await message.answer("Неверный формат даты. Введите дату в формате ММ-ДД ЧЧ:ММ.")
         return
 
     data = await state.get_data()
@@ -46,6 +47,7 @@ async def process_due_date(message: Message, state: FSMContext, scheduler: Async
         writer.writerow([task_id, description, "", "В процессе", due_date, str(message.from_user.id)])
 
     reminder_time = due_date_obj - timedelta(hours=1)
+    print(reminder_time)
 
     if reminder_time > datetime.now():
         scheduler.add_job(
@@ -61,11 +63,10 @@ async def process_due_date(message: Message, state: FSMContext, scheduler: Async
             "date",
             run_date=due_date_obj,
             args=[message.bot, message.from_user.id, description],
-            id=f"deadline_{task_id}",
         )
 
     await state.clear()
-    await message.answer(f"Задача создана! ID задачи: {task_id}")
+    await message.answer(f"Задача создана!")
 
 @router.message(F.text == "Удалить задачу")
 async def delete_task_prompt(message: Message):
@@ -261,7 +262,6 @@ async def view_tasks(message: Message):
     for task in user_tasks:
         task_id, description, assigned_to, status, due_date, _ = task
         response += (
-            f"ID: {task_id}\n"
             f"Описание: {description}\n"
             f"Назначена: {assigned_to if assigned_to else 'Никому'}\n"
             f"Статус: {status}\n"

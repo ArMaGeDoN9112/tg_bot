@@ -58,7 +58,8 @@ async def process_initial_question(message: Message, state: FSMContext):
                                     " многосложный, давай развернутый ответ или структурируй его по пунктам. "
                                     "Если информация требует пояснений, добавь их. Отвечай честно, предоставляя только"
                                     " актуальную и проверенную информацию, избегай двусмысленных формулировок или"
-                                    " неполных данных.")
+                                    " неполных данных. ПОЖАЛУЙСТА, НЕ ИСПОЛЬЗУЙ MARKDOWN ПРИ ОТВЕТАХ НА ВОПРОС, "
+                                    "А ТАКЖЕ НЕ ИСПОЛЬЗУЙ ЖИРНЫЙ И КУРСИВНЫЙ ШРИФТЫ")
     elif mode == "Генерация идей (ИИ)":
         ai_manager.start_new_dialog(user_id,
                                     "Ты являешься помощником в генерации идей для проектов. Твоя цель — предлагать "
@@ -73,12 +74,14 @@ async def process_initial_question(message: Message, state: FSMContext):
                                     "вариантов идей с разными уровнями сложности или направленности. Генерируй идеи "
                                     "как для узких, так и для широких тем. От конкретной задачи до абстрактной "
                                     "концепции. Ты можешь адаптировать свои предложения под современные тренды, "
-                                    "технологии и популярные темы.")
+                                    "технологии и популярные темы. ПОЖАЛУЙСТА, НЕ ИСПОЛЬЗУЙ MARKDOWN ПРИ "
+                                    "ОТВЕТАХ НА ВОПРОС А ТАКЖЕ НЕ ИСПОЛЬЗУЙ ЖИРНЫЙ И КУРСИВНЫЙ ШРИФТЫ")
     else:
         await message.answer("Ошибка: режим не выбран.")
         return
 
     ai_response = ai_manager.get_ai_response(user_id, message.text)
+    ai_response = ai_response.replace("**", "")
 
     await message.answer(ai_response, reply_markup=get_ai_keyboard())
     await state.set_state(AIChatStates.in_dialog)
@@ -88,5 +91,5 @@ async def handle_dialog_message(message: Message, state: FSMContext):
     user_id = message.from_user.id
     ai_response = ai_manager.get_ai_response(user_id, message.text)
 
-    await message.answer(ai_response, reply_markup=get_ai_keyboard())
+    await message.answer(ai_response.replace("**", ""), reply_markup=get_ai_keyboard())
 
